@@ -1,0 +1,8 @@
+streamlit
+openai-whisper
+nltk
+spacy
+transformers
+torch
+fpdf
+ffmpeg-python
