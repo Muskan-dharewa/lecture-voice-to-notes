@@ -2,23 +2,16 @@ import streamlit as st
 import whisper
 import os
 from openai import OpenAI
-
-# ---------------- CONFIG ----------------
 st.set_page_config(
     page_title="Lecture Voice-to-Notes Generator",
     layout="wide"
 )
-
-client = OpenAI()  # API key read from environment
-
-# ---------------- LOAD WHISPER ----------------
+client = OpenAI()  
 @st.cache_resource
 def load_whisper():
     return whisper.load_model("base")
 
 whisper_model = load_whisper()
-
-# ---------------- LLM FUNCTION ----------------
 def generate_study_material(transcript):
     prompt = f"""
 You are an academic study assistant.
@@ -42,7 +35,6 @@ Lecture text:
 
     return response.choices[0].message.content
 
-# ---------------- UI ----------------
 st.title("🎓 Lecture Voice-to-Notes Generator")
 st.write("Upload a lecture audio file and get **clean notes, topics, quizzes, and flashcards**.")
 
@@ -53,14 +45,12 @@ audio_file = st.file_uploader(
 
 if audio_file is not None:
 
-    # Save audio
     audio_path = os.path.join(os.getcwd(), "temp_audio.wav")
     with open(audio_path, "wb") as f:
         f.write(audio_file.read())
 
     st.success("Audio uploaded successfully!")
 
-    # -------- TRANSCRIPTION --------
     with st.spinner("Transcribing lecture audio..."):
         result = whisper_model.transcribe(audio_path)
         transcript = result["text"]
@@ -68,7 +58,6 @@ if audio_file is not None:
     st.subheader("📜 Raw Transcript")
     st.text_area("Transcript", transcript, height=220)
 
-    # -------- GENERATIVE AI --------
     with st.spinner("Generating study material using AI..."):
         study_material = generate_study_material(transcript)
 
