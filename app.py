@@ -15,26 +15,24 @@ client = OpenAI()  # Uses OPENAI_API_KEY from environment
 
 # ---------------- LOAD WHISPER ----------------
 @st.cache_resource
-def load_whisper(model_size: str):
-    return whisper.load_model(model_size)
+def load_whisper():
+    return whisper.load_model("small")  # fixed model (fast)
 
-# Sidebar UI
-st.sidebar.title("⚙️ Settings")
-model_choice = st.sidebar.selectbox(
-    "Whisper Model (Speed vs Accuracy)",
-    ["small (fast)", "medium (accurate)"],
-    index=0
-)
+whisper_model = load_whisper()
 
-whisper_model_name = "small" if "small" in model_choice else "medium"
-whisper_model = load_whisper(whisper_model_name)
+# ---------------- FIXED SETTINGS ----------------
+CHUNK_SIZE = 2500  # fixed chunk size (no UI)
 
-chunk_size = st.sidebar.slider("Chunk Size (text split)", 1500, 3500, 2500, step=500)
-num_flashcards = st.sidebar.slider("Flashcards", 5, 25, 15)
+# ---------------- SIDEBAR UI (Clean) ----------------
+st.sidebar.title("📌 Upload & Generate")
+
+audio_file = st.sidebar.file_uploader("Upload Audio (.mp3/.wav)", type=["mp3", "wav"])
+generate_btn = st.sidebar.button("🚀 Generate Study Material")
+
+# Optional controls (you can remove if you want)
+st.sidebar.markdown("### ✍️ Output Settings")
 num_questions = st.sidebar.slider("Quiz Questions", 5, 25, 15)
-
-audio_file = st.sidebar.file_uploader("📤 Upload Audio (.mp3/.wav)", type=["mp3", "wav"])
-generate_btn = st.sidebar.button("🚀 Generate")
+num_flashcards = st.sidebar.slider("Flashcards", 5, 25, 15)
 
 # ---------------- HELPER FUNCTIONS ----------------
 def chunk_text(text, size=2500):
@@ -95,15 +93,15 @@ if audio_file is not None and generate_btn:
         transcript = result["text"]
     progress.progress(30)
 
-    # Show transcript in tab
+    # Tabs for clean UI
     tab1, tab2, tab3 = st.tabs(["📜 Transcript", "📘 Notes", "❓ Quiz & Flashcards"])
 
     with tab1:
         st.subheader("Full Lecture Transcript")
-        st.text_area("Transcript", transcript, height=300)
+        st.text_area("Transcript", transcript, height=320)
 
     # ---- CHUNKING ----
-    chunks = chunk_text(transcript, size=chunk_size)
+    chunks = chunk_text(transcript, size=CHUNK_SIZE)
     st.info(f"Lecture split into {len(chunks)} parts for processing.")
     progress.progress(40)
 
@@ -133,14 +131,14 @@ if audio_file is not None and generate_btn:
         st.subheader("❓ Quiz + Flashcards")
         st.markdown(final_output)
 
-    # Cleanup temp audio file
+    # Cleanup
     try:
         os.remove(audio_path)
     except:
         pass
 
 elif audio_file is not None and not generate_btn:
-    st.info("⬅️ Click **Generate** in the sidebar to start processing.")
+    st.info("⬅️ Click **Generate Study Material** in the sidebar.")
 
 else:
     st.info("⬅️ Upload an audio file from the sidebar to begin.")
